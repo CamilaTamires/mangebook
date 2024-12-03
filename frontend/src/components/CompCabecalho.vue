@@ -18,7 +18,6 @@
         placeholder="Buscar título ou autor" 
       />
       <button @click="search">Buscar</button>
-      
     </div>
     
     <!-- Seção de perfil -->
@@ -31,6 +30,7 @@
       <div v-if="dropdownVisible" class="dropdown-menu">
         <p class="username">{{ userName }}</p>
         <button class="dropdown-item" @click="manageBooks">Gerenciar Livros</button>
+        <button class="dropdown-item" @click="manageUsers">Gerenciar Usuários</button> <!-- Novo botão -->
         <button class="dropdown-item" @click="logout">Sair</button>
       </div>
     </div>
@@ -67,11 +67,15 @@ export default {
       this.$router.push('/book-management');
     },
 
+    manageUsers() {
+      this.$router.push('/user-management'); // Redireciona para a página de gerenciamento de usuários
+    },
+
     goHome() {
       this.$router.push('/home');
     },
 
-// Método para buscar livros e redirecionar para a HomePage
+    // Método para buscar livros e redirecionar para a HomePage
     search() {
       if (this.searchQuery.trim()) {
         // Quando o usuário clicar no botão de buscar, redireciona para a HomePage

@@ -27,7 +27,7 @@ exports.checkUsername = async (req, res) => {
 
 // Função para registrar o usuário
 exports.registerUser = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, name, email, birthDate, cpf } = req.body;
 
   try {
     // Verifica se o usuário já existe
@@ -37,7 +37,7 @@ exports.registerUser = async (req, res) => {
     }
 
     // Cria um novo usuário com nome de usuário e senha (sem criptografar)
-    const newUser = new User({ username, password });  // Senha em texto claro
+    const newUser = new User({ username, password, name, email, birthDate, cpf });  // Senha em texto claro
     await newUser.save();
 
     return res.status(201).json({ message: 'Usuário registrado com sucesso' });

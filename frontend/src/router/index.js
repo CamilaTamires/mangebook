@@ -6,6 +6,7 @@ import LoginPage from '@/views/LoginPage.vue';
 import HomePage from '@/views/HomePage.vue';
 import BookDetailsPage from '@/views/BookDetailsPage.vue';
 import BookManagement from '@/views/BookManagementPage.vue';
+import UserManagementPage from '@/views/UserManagementPage.vue';
 import NotFound from '@/views/NotFound.vue';
 
 // Importa a função de autenticação
@@ -33,6 +34,12 @@ const routes = [
     component: BookManagement,
     name: 'BookManagement',
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/user-management',  // Nova rota para gerenciamento de usuários
+    component: UserManagementPage,  // O componente que você irá criar para o gerenciamento de usuários
+    name: 'UserManagement',
+    meta: { requiresAuth: true },  // Requer autenticação
   },
   {
     path: '/:catchAll(.*)',
