@@ -35,7 +35,7 @@ exports.getAllBooks = async (req, res) => {
 // Atualizar um livro existente
 exports.updateBook = async (req, res) => {
   const { id } = req.params;
-  const { title, author, year, description } = req.body;
+  const { title, author, year, description ,isbn } = req.body;
 
   // Verifique se os campos obrigatórios foram fornecidos
   if (!title || !author || !year) {
@@ -43,7 +43,7 @@ exports.updateBook = async (req, res) => {
   }
 
   try {
-    const updatedBook = await Book.findByIdAndUpdate(id, { title, author, year, description }, { new: true });
+    const updatedBook = await Book.findByIdAndUpdate(id, { title, author, year, description,  isbn }, { new: true });
 
     if (!updatedBook) {
       return res.status(404).json({ message: 'Livro não encontrado' });

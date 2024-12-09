@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');  // Importando as rotas de autenticação
 const bookRoutes = require('./routes/bookRoutes');  // Rotas de livros
-
+const userRoutes = require('./routes/userRoutes');
 const app = express();
 
 // Middleware
@@ -15,7 +15,7 @@ app.use(express.json());  // Permite que o servidor entenda dados JSON
 // Configuração das rotas
 app.use('/api/auth', authRoutes);  // Rota de autenticação
 app.use('/api/books', bookRoutes);  // Rota de livros
-app.use('/api/users', authRoutes);  // Rota para usuários (se necessário)
+app.use('/api/users', userRoutes);   // Rota para usuários (se necessário)
 
 // Conectando ao MongoDB usando a URL do banco de dados do .env
 mongoose.connect(process.env.MONGO_URI, {
@@ -41,3 +41,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+

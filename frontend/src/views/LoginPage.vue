@@ -73,6 +73,8 @@ export default {
           password: this.password,
         });
 
+      
+
         // Verifica se a resposta contém o token
         if (response.data.token) {
           localStorage.setItem('token', response.data.token);  // Salva o token no localStorage

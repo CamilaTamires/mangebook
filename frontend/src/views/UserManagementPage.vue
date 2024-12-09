@@ -1,200 +1,219 @@
 <template>
-    <div class="user-management">
-      <!-- Cabeçalho -->
-      <CompCabecalho :searchQuery="searchQuery" @updateSearchQuery="updateSearchQuery" />
+  <div class="user-management">
+    <!-- Cabeçalho -->
+    <CompCabecalho :searchQuery="searchQuery" @updateSearchQuery="updateSearchQuery" />
   
-      <!-- Tabela de Usuários -->
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Usuário</th>
-            <th>Email</th>
-            <th>Data de Nascimento</th>
-            <th>CPF</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in filteredUsers" :key="user._id">
-            <td>{{ user.name }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.birthDate }}</td>
-            <td>{{ user.cpf }}</td>
-            <td>{{ user.isActive ? 'Ativo' : 'Desabilitado' }}</td>
-            <td>
-              <button @click="openModal(user)">Editar</button>
-              <button @click="deleteUser(user._id)">Excluir</button>
-              <button @click="disableUser(user._id)">Desabilitar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Tabela de Usuários -->
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Usuário</th>
+          <th>Email</th>
+          <th>Data de Nascimento</th>
+          <th>CPF</th>
+          <th>Status</th>
+          <th>Nível</th> 
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="user in filteredUsers" :key="user._id">
+          <td>{{ user.name }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ formatDate(user.birthDate) }}</td>
+          <td>{{ formatCPF(user.cpf) }}</td>
+          <td>{{ user.isActive ? 'Ativo' : 'Desabilitado' }}</td>
+          <td>{{ user.nivel || 'Aluno' }}</td> 
+          <td>
+            <button @click="openModal(user)">Editar</button>
+            <!-- Remover o botão Excluir -->
+              <button @click="disableUser(user)">
+                {{ user.isActive ? 'Desabilitar' : 'Habilitar' }}
+              </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   
-      <!-- Botão Inserir Usuário -->
-      <div class="menu">
-        <button @click="openModal()">Inserir Usuário</button>
+    <!-- Modal para Inserir/Editar Usuário -->
+    <div v-if="modalVisible" class="modal">
+      <div class="modal-content">
+        <h2>{{ isEditing ? 'Editar Usuário' : 'Inserir Novo Usuário' }}</h2>
+        <input v-model="modalUser.username" placeholder="Nome de usuário" required readonly />
+        <input v-model="modalUser.name" placeholder="Nome completo" required />
+        <input v-model="modalUser.email" placeholder="Email" type="email" required />
+        <input v-model="modalUser.birthDate" placeholder="Data de Nascimento" type="date" required />
+        <input v-model="modalUser.cpf" @input="modalUser.cpf = formatCPF(modalUser.cpf)" placeholder="CPF" type="text" required />
+       
+        <select v-model="modalUser.nivel" required>
+          <option value="Aluno">Aluno</option>
+          <option value="Admin">Admin</option>
+        </select>
+
+        <button @click="save">{{ isEditing ? 'Salvar' : 'Inserir' }}</button>
+        <button @click="closeModal">Cancelar</button>
       </div>
-  
-      <!-- Modal para Inserir/Editar Usuário -->
-      <div v-if="modalVisible" class="modal">
-        <div class="modal-content">
-          <h2>{{ isEditing ? 'Editar Usuário' : 'Inserir Novo Usuário' }}</h2>
-          <input v-model="modalUser.username" placeholder="Nome de usuário" required />
-          <input v-model="modalUser.name" placeholder="Nome completo" required />
-          <input v-model="modalUser.email" placeholder="Email" type="email" required />
-          <input v-model="modalUser.birthDate" placeholder="Data de Nascimento" type="date" required />
-          <input v-model="modalUser.cpf" placeholder="CPF" type="text" required />
-          <button @click="save">{{ isEditing ? 'Editar' : 'Inserir' }}</button>
-          <button @click="closeModal">Cancelar</button>
-        </div>
-      </div>
-  
-      <!-- Rodapé -->
-      <CompRodape />
     </div>
-  </template>
   
-  <script>
-  // Importando os componentes
-  import CompCabecalho from '@/components/CompCabecalho.vue';
-  import CompRodape from '@/components/CompRodape.vue';
-  import axios from 'axios';
-  
-  export default {
-    components: {
-      CompCabecalho, // Cabeçalho
-      CompRodape,    // Rodapé
-    },
-    data() {
-      return {
-        users: [], // Lista de usuários
-        modalVisible: false,
-        modalUser: { id: null, username: '', name: '', email: '', birthDate: '', cpf: '' },
-        isEditing: false, // Determina se está no modo edição
-        searchQuery: '', // Para busca na tabela
-        successMessage: '', // Mensagem de sucesso após salvar usuário
-      };
-    },
-    computed: {
-      filteredUsers() {
-        if (Array.isArray(this.users)) {
-        return this.users.filter(user =>
-          user.username.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(this.searchQuery.toLowerCase())
+    <!-- Rodapé -->
+    <CompRodape />
+  </div>
+</template>
+
+
+<script>
+import CompCabecalho from '@/components/CompCabecalho.vue';
+import CompRodape from '@/components/CompRodape.vue';
+import axios from 'axios';
+
+export default {
+  components: {
+    CompCabecalho,
+    CompRodape,
+  },
+  data() {
+    return {
+      users: [],
+      modalVisible: false,
+      modalUser: { id: null, username: '', name: '', email: '', birthDate: '', cpf: '' },
+      isEditing: false,
+      searchQuery: '',
+      successMessage: '',
+    };
+  },
+  computed: {
+    filteredUsers() {
+      if (Array.isArray(this.users)) {
+        return this.users.filter(user => 
+          (user.username && user.username.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (user.name && user.name.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (user.email && user.email.toLowerCase().includes(this.searchQuery.toLowerCase()))
         );
       }
-      return []; // Se não for um array, retorna um array vazio
-      },
+      return [];
     },
-    created() {
-      // Verificar se o usuário está autenticado
-      this.checkAuth();
+  },
+  created() {
+    this.checkAuth();
+  },
+  methods: {
+    checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.$router.push('/login');
+      } else {
+        this.fetchUsers();
+      }
     },
-    methods: {
-      checkAuth() {
+    updateSearchQuery(newSearchQuery) {
+      this.searchQuery = newSearchQuery;
+    },
+
+    async fetchUsers() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/auth/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        // Verifique se a resposta é um array e, se for, extraia o primeiro elemento
+        if (Array.isArray(response.data) && Array.isArray(response.data[0])) {
+          this.users = response.data[0];  // Acesse o primeiro array dentro da resposta
+        } else {
+          this.users = response.data;  // Caso a resposta seja um array simples, utilize diretamente
+        }
+        
+        console.log('Usuários recebidos:', this.users);  // Verifique os dados no console
+
+      } catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+      }
+    },
+
+    openModal(user = null) {
+      this.modalVisible = true;
+      this.isEditing = !!user;
+      if (user) {
+        this.modalUser = { ...user };
+      } else {
+        this.modalUser = { id: null, username: '', name: '', email: '', birthDate: '', cpf: '' };
+      }
+    },
+    closeModal() {
+      this.modalVisible = false;
+    },
+    async save() {
+      try {
         const token = localStorage.getItem('token');
         if (!token) {
-          // Redireciona para a página de login se não houver token
-          this.$router.push('/login');
-        } else {
-          // Caso o token exista, tenta buscar os dados dos usuários
-          this.fetchUsers();
+          console.error("Token não encontrado!");
+          return;
         }
-      },
-      updateSearchQuery(newSearchQuery) {
-        this.searchQuery = newSearchQuery;
-      },
-      async fetchUsers() {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await axios.get('http://localhost:5000/api/auth/users', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          if (Array.isArray(response.data)) {
-                this.users = response.data;
-              } else {
-              console.error('A resposta da API não é um array:', response.data);
+        const config = { headers: { 'Authorization': `Bearer ${token}` } };
+        let url = 'http://localhost:5000/api/auth/users';
+        let method = 'post';
+
+        console.log("Dados que serão enviados para o backend:", this.modalUser);
+
+        if (this.isEditing) {
+          url = `http://localhost:5000/api/auth/users/${this.modalUser._id}`;
+          method = 'put';
         }
-     } catch (error) {
-          console.error('Erro ao buscar usuários:', error);
-        }
-      },
-      openModal(user = null) {
-        this.modalVisible = true;
-        this.isEditing = !!user;
-        if (user) {
-          this.modalUser = { ...user };
-        } else {
-          this.modalUser = { id: null, username: '', name: '', email: '', birthDate: '', cpf: '' };
-        }
-      },
-      closeModal() {
-        this.modalVisible = false;
-      },
-      async save() {
-        try {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            console.error("Token não encontrado!");
-            return;
-          }
-          const config = { headers: { 'Authorization': `Bearer ${token}` } };
-          let url = 'http://localhost:5000/api/auth/users';
-          let method = 'post';
-  
-          if (this.isEditing) {
-            url = `http://localhost:5000/api/auth/users/${this.modalUser._id}`;
-            method = 'put';
-          }
-  
-          await axios({ method, url, data: this.modalUser, ...config });
-          this.fetchUsers();
-          this.successMessage = 'Usuário salvo com sucesso!';
-          this.closeModal();
-          setTimeout(() => {
-            this.successMessage = '';
-          }, 3000);
-        } catch (error) {
-          console.error('Erro ao salvar usuário:', error);
-        }
-      },
-      async deleteUser(id) {
-        try {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            console.error("Token não encontrado!");
-            return;
-          }
-          const config = { headers: { 'Authorization': `Bearer ${token}` } };
-          await axios.delete(`http://localhost:5000/api/auth/users/${id}`, config);
-          this.fetchUsers();
-        } catch (error) {
-          console.error('Erro ao excluir usuário:', error);
-        }
-      },
-      async disableUser(id) {
-        try {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            console.error("Token não encontrado!");
-            return;
-          }
-          const config = { headers: { 'Authorization': `Bearer ${token}` } };
-          await axios.put(`http://localhost:5000/api/auth/users/${id}/disable`, {}, config);
-          this.fetchUsers();
-        } catch (error) {
-          console.error('Erro ao desabilitar usuário:', error);
-        }
-      },
+        await axios({ method, url, data: this.modalUser, ...config });
+        this.fetchUsers();
+        this.successMessage = 'Usuário salvo com sucesso!';
+        this.closeModal();
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      } catch (error) {
+        console.error('Erro ao salvar usuário:', error);
+      }
     },
-  };
-  </script>
+    async disableUser(user) {
+      try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("Token não encontrado!");
+      return;
+    }
+    const config = { headers: { 'Authorization': `Bearer ${token}` } };
+
+    // Alterar o estado de isActive
+    const updatedUser = { ...user, isActive: !user.isActive };
+
+    // Atualizando o status do usuário no banco de dados
+    await axios.put(`http://localhost:5000/api/auth/users/${user._id}`, updatedUser, config);
+
+    // Atualizando a lista de usuários após a alteração
+    this.fetchUsers();
+    } catch (error) {
+     console.error('Erro ao alterar status do usuário:', error);
+    }
+   },
+    formatDate(date) {
+      if (!date) return '';
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(date).toLocaleDateString('pt-BR', options);
+    },
+    formatCPF(cpf) {
+      if (!cpf) return '';
+      cpf = cpf.replace(/\D/g, '');  // Remove todos os caracteres não numéricos
+      if (cpf.length <= 3) return cpf;
+      if (cpf.length <= 6) return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}`; 
+      if (cpf.length <= 9) return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}`;
+      return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9, 11)}`;
+    },
+  },
+};
+</script>
+
+
+
   
   <style scoped>
   .user-management {

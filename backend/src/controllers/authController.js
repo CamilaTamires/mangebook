@@ -83,3 +83,4 @@ exports.loginUser = async (req, res) => {
     return res.status(500).json({ message: 'Erro ao fazer login' });
   }
 };
+
